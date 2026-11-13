@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="90" fill="#171421"/>
+  <path d="M256 65 L390 125 L390 300 Q390 390 256 450 Q122 390 122 300 L122 125 Z" fill="#a77a3d" stroke="#e9bd69" stroke-width="12"/>
+  <path d="M256 105 L355 150 L355 295 Q355 365 256 410 Q157 365 157 295 L157 150 Z" fill="#252132"/>
+  <path d="M256 155 L280 225 L350 225 L293 267 L315 340 L256 296 L197 340 L219 267 L162 225 L232 225 Z" fill="#e9bd69"/>
+  <text x="256" y="385" font-size="35" fill="#e9bd69" text-anchor="middle" font-family="serif">RPG</text>
+</svg>
