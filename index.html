@@ -1,0 +1,268 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#171421">
+<title>Grimoire RPG</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#171421;color:#f4e9d0;font-family:Arial,sans-serif;padding:16px}
+main{max-width:650px;margin:auto}
+h1{text-align:center;color:#e9bd69;margin:12px 0 4px}
+.sub{text-align:center;color:#aaa;margin-bottom:22px}
+section{background:#252132;border:1px solid #51415f;border-radius:14px;padding:15px;margin:14px 0}
+h2{color:#e9bd69;font-size:19px;margin:0 0 13px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat,.field{background:#342d43;padding:10px;border-radius:10px}
+label{display:block;font-size:13px;color:#c9bdd8;margin-bottom:6px}
+input,select{width:100%;background:#1d1928;color:#fff;border:1px solid #675778;border-radius:7px;padding:9px;font-size:16px}
+.stat input{margin-bottom:7px}
+.counter{display:flex;align-items:center;justify-content:space-between;gap:8px}
+button{background:#a77a3d;color:white;border:0;border-radius:8px;padding:9px 14px;font-size:17px;font-weight:bold}
+button:active{transform:scale(.96)}
+.counter strong{font-size:20px;min-width:25px;text-align:center}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.gold{display:flex;align-items:center;justify-content:center;gap:18px}
+.gold strong{font-size:25px;color:#f4cc69}
+.inventory-item{display:flex;align-items:center;gap:8px;margin:8px 0}
+.inventory-item input{flex:1;min-width:0}
+.remove{background:#873e49}
+.add{width:100%;margin-top:10px}
+.note{text-align:center;color:#a99db5;font-size:12px;margin:18px}
+</style>
+</head>
+<body>
+<main>
+<h1>⚔️ GRIMOIRE RPG</h1>
+<div class="sub">Fiche de personnage • Aventure & légende</div>
+
+<section>
+<h2>🧙 Personnage</h2>
+<div class="field">
+<label>Nom du personnage</label>
+<input id="character" placeholder="Nom de ton héros">
+</div>
+</section>
+
+<section>
+<h2>📜 Caractéristiques</h2>
+<div class="grid" id="stats"></div>
+</section>
+
+<section>
+<h2>🏃 Initiative et vitesse</h2>
+<div class="row">
+<div class="field">
+<label>Initiative</label>
+<div class="counter">
+<button onclick="change('initiative',-1)">−</button>
+<strong id="initiative">0</strong>
+<button onclick="change('initiative',1)">+</button>
+</div>
+</div>
+<div class="field">
+<label>Vitesse</label>
+<div class="counter">
+<button onclick="change('speed',-1)">−</button>
+<strong id="speed">0</strong>
+<button onclick="change('speed',1)">+</button>
+</div>
+</div>
+</div>
+</section>
+
+<section>
+<h2>❤️ Points de vie</h2>
+<div class="row">
+<div class="field">
+<label>PV actuels</label>
+<div class="counter">
+<button onclick="change('hp',-1)">−</button>
+<strong id="hp">20</strong>
+<button onclick="change('hp',1)">+</button>
+</div>
+</div>
+<div class="field">
+<label>PV maximum</label>
+<input id="hpmax" type="number" min="1" value="20">
+</div>
+</div>
+</section>
+
+<section>
+<h2>⚔️ Arme principale</h2>
+<div class="field">
+<label>Arme fixe</label>
+<input value="Épée" disabled>
+<div class="row">
+<div>
+<label>Dégâts</label>
+<input id="mainDamage" value="1d8">
+</div>
+<div>
+<label>Modificateur</label>
+<div class="counter">
+<button onclick="change('mainMod',-1)">−</button>
+<strong id="mainMod">0</strong>
+<button onclick="change('mainMod',1)">+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section>
+<h2>🏹 Arme secondaire</h2>
+<div class="field">
+<label>Choisir une arme</label>
+<select id="secondary">
+<option>Épée</option>
+<option>Arc court</option>
+<option>Arc long</option>
+<option>Lance</option>
+</select>
+<div class="row">
+<div>
+<label>Dégâts</label>
+<input id="secondaryDamage" value="1d6">
+</div>
+<div>
+<label>Modificateur</label>
+<div class="counter">
+<button onclick="change('secondaryMod',-1)">−</button>
+<strong id="secondaryMod">0</strong>
+<button onclick="change('secondaryMod',1)">+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section>
+<h2>🪙 Bourse</h2>
+<div class="gold">
+<button onclick="change('gold',-1)">−</button>
+<strong id="gold">0</strong>
+<button onclick="change('gold',1)">+</button>
+</div>
+<div class="note">Pièces d'or</div>
+</section>
+
+<section>
+<h2>🎒 Inventaire</h2>
+<div id="inventory"></div>
+<button class="add" onclick="addItem()">+ Ajouter un objet</button>
+</section>
+
+<div class="note">Grimoire RPG • Tes modifications sont sauvegardées automatiquement sur cet appareil.</div>
+</main>
+
+<script>
+const statNames=["Force","Constitution","Sagesse","Dextérité","Intelligence","Charisme"];
+const defaults={
+character:"",initiative:0,speed:0,hp:20,hpmax:20,
+mainDamage:"1d8",mainMod:0,secondary:"Épée",
+secondaryDamage:"1d6",secondaryMod:0,gold:0,
+stats:statNames.map(n=>({name:n,value:0})),
+inventory:[]
+};
+let data={...defaults};
+try{
+const saved=JSON.parse(localStorage.getItem("grimoireRPG"));
+if(saved)data={...defaults,...saved};
+}catch(e){}
+
+function save(){
+localStorage.setItem("grimoireRPG",JSON.stringify(data));
+}
+function change(key,amount){
+const limits={initiative:10,speed:10,mainMod:10,secondaryMod:10};
+const mins={initiative:-10,speed:-10,mainMod:-10,secondaryMod:-10,gold:0,hp:0};
+data[key]=Math.max(mins[key]??-999,Math.min(limits[key]??999,(Number(data[key])||0)+amount));
+if(key==="hp")data.hp=Math.min(data.hp,Number(data.hpmax)||1);
+render();
+}
+function renderStats(){
+const el=document.getElementById("stats");
+el.innerHTML="";
+data.stats.forEach((s,i)=>{
+const div=document.createElement("div");
+div.className="stat";
+div.innerHTML=`
+<label>Nom de la caractéristique</label>
+<input data-name="${i}" value="${escapeHTML(s.name)}">
+<label>Modificateur</label>
+<div class="counter">
+<button data-stat="${i}" data-step="-1">−</button>
+<strong>${s.value}</strong>
+<button data-stat="${i}" data-step="1">+</button>
+</div>`;
+el.appendChild(div);
+});
+el.querySelectorAll("[data-name]").forEach(input=>{
+input.addEventListener("input",()=>{
+data.stats[Number(input.dataset.name)].name=input.value;save();
+});
+});
+el.querySelectorAll("[data-stat]").forEach(button=>{
+button.addEventListener("click",()=>{
+const s=data.stats[Number(button.dataset.stat)];
+s.value=Math.max(-10,Math.min(10,s.value+Number(button.dataset.step)));
+render(); 
+});
+});
+}
+function escapeHTML(value){
+return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function renderInventory(){
+const el=document.getElementById("inventory");
+el.innerHTML="";
+data.inventory.forEach((item,i)=>{
+const div=document.createElement("div");
+div.className="inventory-item";
+const input=document.createElement("input");
+input.value=item;
+input.placeholder="Nom de l'objet";
+input.addEventListener("input",()=>{data.inventory[i]=input.value;save();});
+const button=document.createElement("button");
+button.className="remove";
+button.textContent="×";
+button.onclick=()=>{data.inventory.splice(i,1);render();};
+div.append(input,button);
+el.appendChild(div);
+});
+}
+function addItem(){
+data.inventory.push("");
+render();
+const inputs=document.querySelectorAll("#inventory input");
+inputs[inputs.length-1]?.focus();
+}
+function render(){
+renderStats();
+["initiative","speed","hp","mainMod","secondaryMod","gold"].forEach(key=>{
+document.getElementById(key).textContent=data[key];
+});
+document.getElementById("character").value=data.character;
+document.getElementById("hpmax").value=data.hpmax;
+document.getElementById("mainDamage").value=data.mainDamage;
+document.getElementById("secondary").value=data.secondary;
+document.getElementById("secondaryDamage").value=data.secondaryDamage;
+renderInventory();
+save();
+}
+document.getElementById("character").addEventListener("input",e=>{data.character=e.target.value;save();});
+document.getElementById("hpmax").addEventListener("input",e=>{
+data.hpmax=Math.max(1,Number(e.target.value)||1);
+data.hp=Math.min(data.hp,data.hpmax);render();
+});
+document.getElementById("mainDamage").addEventListener("input",e=>{data.mainDamage=e.target.value;save();});
+document.getElementById("secondary").addEventListener("change",e=>{data.secondary=e.target.value;save();});
+document.getElementById("secondaryDamage").addEventListener("input",e=>{data.secondaryDamage=e.target.value;save();});
+render();
+</script>
+</body>
+</html>
