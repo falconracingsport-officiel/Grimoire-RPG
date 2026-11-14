@@ -2,11 +2,12 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#171421">
+<link rel="manifest" href="manifest.json">
 <title>Grimoire RPG</title>
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#171421;color:#f4e9d0;font-family:Arial,sans-serif;padding:16px}
@@ -16,7 +17,7 @@ h1{text-align:center;color:#e9bd69;margin:12px 0 4px}
 section{background:#252132;border:1px solid #51415f;border-radius:14px;padding:15px;margin:14px 0}
 h2{color:#e9bd69;font-size:19px;margin:0 0 13px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.stat,.field{background:#342d43;padding:10px;border-radius:10px}
+.stat,.field{background:#342d43;padding:10px;border-radius:10px;min-width:0}
 label{display:block;font-size:13px;color:#c9bdd8;margin-bottom:6px}
 input,select{width:100%;background:#1d1928;color:#fff;border:1px solid #675778;border-radius:7px;padding:9px;font-size:16px}
 .stat input{margin-bottom:7px}
@@ -32,15 +33,47 @@ button:active{transform:scale(.96)}
 .remove{background:#873e49}
 .add{width:100%;margin-top:10px}
 .note{text-align:center;color:#a99db5;font-size:12px;margin:18px}
+.avatar-area{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.avatar-preview{width:100px;height:100px;border-radius:50%;object-fit:cover;border:2px solid #e9bd69;background:#1d1928}
+.avatar-placeholder{width:100px;height:100px;border-radius:50%;border:2px dashed #675778;display:flex;align-items:center;justify-content:center;text-align:center;color:#a99db5;font-size:12px;padding:8px}
+.avatar-controls{flex:1;min-width:160px}
+.avatar-controls input{font-size:13px}
+.subskills{margin-top:12px;padding-top:10px;border-top:1px solid #51415f}
+.subskills-title{font-size:13px;color:#e9bd69;margin-bottom:8px}
+.subskill{background:#252132;border-radius:8px;padding:8px;margin:7px 0}
+.subskill-name{margin-bottom:7px}
+.subskill-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.subskill-bottom button{padding:6px 11px}
+.subskill-bottom strong{min-width:25px;text-align:center}
+.add-subskill{width:100%;font-size:13px;margin-top:5px}
+.status{text-align:center;font-size:12px;color:#c9bdd8;margin-top:8px}
+@media(max-width:420px){
+.grid{grid-template-columns:1fr}
+}
 </style>
 </head>
+
 <body>
 <main>
+
 <h1>⚔️ GRIMOIRE RPG</h1>
 <div class="sub">Fiche de personnage • Aventure & légende</div>
 
 <section>
 <h2>🧙 Personnage</h2>
+
+<div class="avatar-area">
+<div id="avatarDisplay">
+<div class="avatar-placeholder">Aucune photo</div>
+</div>
+
+<div class="avatar-controls">
+<label>Photo du personnage (JPEG)</label>
+<input id="avatarInput" type="file" accept="image/jpeg">
+<div class="note">La photo est conservée sur cet appareil.</div>
+</div>
+</div>
+
 <div class="field">
 <label>Nom du personnage</label>
 <input id="character" placeholder="Nom de ton héros">
@@ -48,7 +81,7 @@ button:active{transform:scale(.96)}
 </section>
 
 <section>
-<h2>📜 Caractéristiques</h2>
+<h2>📜 Caractéristiques et sous-compétences</h2>
 <div class="grid" id="stats"></div>
 </section>
 
@@ -63,6 +96,7 @@ button:active{transform:scale(.96)}
 <button onclick="change('initiative',1)">+</button>
 </div>
 </div>
+
 <div class="field">
 <label>Vitesse</label>
 <div class="counter">
@@ -85,6 +119,7 @@ button:active{transform:scale(.96)}
 <button onclick="change('hp',1)">+</button>
 </div>
 </div>
+
 <div class="field">
 <label>PV maximum</label>
 <input id="hpmax" type="number" min="1" value="20">
@@ -97,11 +132,13 @@ button:active{transform:scale(.96)}
 <div class="field">
 <label>Nom de l'arme principale</label>
 <input id="mainWeapon" value="Épée">
+
 <div class="row">
 <div>
 <label>Dégâts</label>
 <input id="mainDamage" value="1d8">
 </div>
+
 <div>
 <label>Modificateur</label>
 <div class="counter">
@@ -124,11 +161,13 @@ button:active{transform:scale(.96)}
 <option>Arc long</option>
 <option>Lance</option>
 </select>
+
 <div class="row">
 <div>
 <label>Dégâts</label>
 <input id="secondaryDamage" value="1d6">
 </div>
+
 <div>
 <label>Modificateur</label>
 <div class="counter">
@@ -157,121 +196,424 @@ button:active{transform:scale(.96)}
 <button class="add" onclick="addItem()">+ Ajouter un objet</button>
 </section>
 
-<div class="note">Grimoire RPG • Tes modifications sont sauvegardées automatiquement sur cet appareil.</div>
+<div class="status" id="saveStatus">Sauvegarde automatique activée.</div>
+<div class="note">Grimoire RPG • Aventure & légende</div>
+
 </main>
 
 <script>
-const statNames=["Force","Constitution","Sagesse","Dextérité","Intelligence","Charisme"];
+const statNames=[
+"Force",
+"Constitution",
+"Sagesse",
+"Dextérité",
+"Intelligence",
+"Charisme"
+];
+
 const defaults={
-character:"",initiative:0,speed:0,hp:20,hpmax:20,
-mainDamage:"1d8",mainMod:0,secondary:"Épée",
-secondaryDamage:"1d6",secondaryMod:0,gold:0,
-stats:statNames.map(n=>({name:n,value:0})),
+character:"",
+avatar:"",
+initiative:0,
+speed:0,
+hp:20,
+hpmax:20,
+mainWeapon:"Épée",
+mainDamage:"1d8",
+mainMod:0,
+secondary:"Épée",
+secondaryDamage:"1d6",
+secondaryMod:0,
+gold:0,
+stats:statNames.map(n=>({
+name:n,
+value:0,
+subskills:[]
+})),
 inventory:[]
 };
+
 let data={...defaults};
+
 try{
 const saved=JSON.parse(localStorage.getItem("grimoireRPG"));
-if(saved)data={...defaults,...saved};
-}catch(e){}
+
+if(saved){
+data={...defaults,...saved};
+
+data.stats=statNames.map((name,i)=>{
+const old=(saved.stats||[])[i]||{};
+
+return{
+name:old.name??name,
+value:Number(old.value)||0,
+subskills:Array.isArray(old.subskills)
+?old.subskills.slice(0,5).map(s=>({
+name:s.name||"",
+value:Math.max(-10,Math.min(10,Number(s.value)||0))
+}))
+:[]
+};
+});
+
+data.inventory=Array.isArray(saved.inventory)
+?saved.inventory:[];
+}
+}catch(e){
+console.log("Chargement des données impossible",e);
+}
+
+if(!data.mainWeapon)data.mainWeapon="Épée";
+if(!data.avatar)data.avatar="";
 
 function save(){
+try{
 localStorage.setItem("grimoireRPG",JSON.stringify(data));
+document.getElementById("saveStatus").textContent=
+"Sauvegarde automatique effectuée ✓";
+return true;
+}catch(e){
+document.getElementById("saveStatus").textContent=
+"Attention : espace de sauvegarde insuffisant.";
+return false;
 }
+}
+
 function change(key,amount){
-const limits={initiative:10,speed:10,mainMod:10,secondaryMod:10};
-const mins={initiative:-10,speed:-10,mainMod:-10,secondaryMod:-10,gold:0,hp:0};
-data[key]=Math.max(mins[key]??-999,Math.min(limits[key]??999,(Number(data[key])||0)+amount));
-if(key==="hp")data.hp=Math.min(data.hp,Number(data.hpmax)||1);
+const limits={
+initiative:10,
+speed:10,
+mainMod:10,
+secondaryMod:10
+};
+
+const mins={
+initiative:-10,
+speed:-10,
+mainMod:-10,
+secondaryMod:-10,
+gold:0,
+hp:0
+};
+
+data[key]=Math.max(
+mins[key]??-999,
+Math.min(
+limits[key]??999,
+(Number(data[key])||0)+amount
+)
+);
+
+if(key==="hp"){
+data.hp=Math.min(data.hp,Number(data.hpmax)||1);
+}
+
 render();
 }
+
+function escapeHTML(value){
+return String(value).replace(/[&<>"']/g,c=>({
+"&":"&amp;",
+"<":"&lt;",
+">":"&gt;",
+'"':"&quot;",
+"'":"&#39;"
+}[c]));
+}
+
 function renderStats(){
 const el=document.getElementById("stats");
 el.innerHTML="";
+
 data.stats.forEach((s,i)=>{
 const div=document.createElement("div");
 div.className="stat";
+
 div.innerHTML=`
 <label>Nom de la caractéristique</label>
 <input data-name="${i}" value="${escapeHTML(s.name)}">
+
 <label>Modificateur</label>
 <div class="counter">
 <button data-stat="${i}" data-step="-1">−</button>
 <strong>${s.value}</strong>
 <button data-stat="${i}" data-step="1">+</button>
-</div>`;
+</div>
+
+<div class="subskills">
+<div class="subskills-title">Sous-compétences (${s.subskills.length}/5)</div>
+<div class="subskill-list"></div>
+<button class="add-subskill" data-add="${i}"
+${s.subskills.length>=5?"disabled":""}>
++ Ajouter une sous-compétence
+</button>
+</div>
+`;
+
 el.appendChild(div);
+
+const list=div.querySelector(".subskill-list");
+
+s.subskills.forEach((sub,j)=>{
+const item=document.createElement("div");
+item.className="subskill";
+
+item.innerHTML=`
+<input class="subskill-name"
+data-subname="${i}-${j}"
+placeholder="Nom de la sous-compétence"
+value="${escapeHTML(sub.name)}">
+
+<div class="subskill-bottom">
+<button data-subchange="${i}-${j}" data-step="-1">−</button>
+<strong>${sub.value}</strong>
+<button data-subchange="${i}-${j}" data-step="1">+</button>
+<button class="remove" data-subremove="${i}-${j}">×</button>
+</div>
+`;
+
+list.appendChild(item);
 });
+});
+
 el.querySelectorAll("[data-name]").forEach(input=>{
 input.addEventListener("input",()=>{
-data.stats[Number(input.dataset.name)].name=input.value;save();
+data.stats[Number(input.dataset.name)].name=input.value;
+save();
 });
 });
+
 el.querySelectorAll("[data-stat]").forEach(button=>{
 button.addEventListener("click",()=>{
 const s=data.stats[Number(button.dataset.stat)];
-s.value=Math.max(-10,Math.min(10,s.value+Number(button.dataset.step)));
-render(); 
+s.value=Math.max(-10,Math.min(10,
+s.value+Number(button.dataset.step)));
+render();
+});
+});
+
+el.querySelectorAll("[data-add]").forEach(button=>{
+button.addEventListener("click",()=>{
+const s=data.stats[Number(button.dataset.add)];
+if(s.subskills.length<5){
+s.subskills.push({name:"",value:0});
+render();
+save();
+}
+});
+});
+
+el.querySelectorAll("[data-subname]").forEach(input=>{
+input.addEventListener("input",()=>{
+const [i,j]=input.dataset.subname.split("-").map(Number);
+data.stats[i].subskills[j].name=input.value;
+save();
+});
+});
+
+el.querySelectorAll("[data-subchange]").forEach(button=>{
+button.addEventListener("click",()=>{
+const [i,j]=button.dataset.subchange.split("-").map(Number);
+const sub=data.stats[i].subskills[j];
+
+sub.value=Math.max(-10,Math.min(10,
+sub.value+Number(button.dataset.step)));
+
+render();
+save();
+});
+});
+
+el.querySelectorAll("[data-subremove]").forEach(button=>{
+button.addEventListener("click",()=>{
+const [i,j]=button.dataset.subremove.split("-").map(Number);
+data.stats[i].subskills.splice(j,1);
+render();
+save();
 });
 });
 }
-function escapeHTML(value){
-return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-}
+
 function renderInventory(){
 const el=document.getElementById("inventory");
 el.innerHTML="";
+
 data.inventory.forEach((item,i)=>{
 const div=document.createElement("div");
 div.className="inventory-item";
+
 const input=document.createElement("input");
 input.value=item;
 input.placeholder="Nom de l'objet";
-input.addEventListener("input",()=>{data.inventory[i]=input.value;save();});
+
+input.addEventListener("input",()=>{
+data.inventory[i]=input.value;
+save();
+});
+
 const button=document.createElement("button");
 button.className="remove";
 button.textContent="×";
-button.onclick=()=>{data.inventory.splice(i,1);render();};
+
+button.onclick=()=>{
+data.inventory.splice(i,1);
+render();
+};
+
 div.append(input,button);
 el.appendChild(div);
 });
 }
+
 function addItem(){
 data.inventory.push("");
 render();
 const inputs=document.querySelectorAll("#inventory input");
 inputs[inputs.length-1]?.focus();
+save();
 }
+
+function renderAvatar(){
+const el=document.getElementById("avatarDisplay");
+el.innerHTML="";
+
+if(data.avatar){
+const img=document.createElement("img");
+img.className="avatar-preview";
+img.alt="Photo du personnage";
+img.src=data.avatar;
+el.appendChild(img);
+}else{
+const placeholder=document.createElement("div");
+placeholder.className="avatar-placeholder";
+placeholder.textContent="Aucune photo";
+el.appendChild(placeholder);
+}
+}
+
 function render(){
 renderStats();
-["initiative","speed","hp","mainMod","secondaryMod","gold"].forEach(key=>{
+
+[
+"initiative",
+"speed",
+"hp",
+"mainMod",
+"secondaryMod",
+"gold"
+].forEach(key=>{
 document.getElementById(key).textContent=data[key];
 });
+
 document.getElementById("character").value=data.character;
 document.getElementById("hpmax").value=data.hpmax;
+document.getElementById("mainWeapon").value=data.mainWeapon;
 document.getElementById("mainDamage").value=data.mainDamage;
 document.getElementById("secondary").value=data.secondary;
 document.getElementById("secondaryDamage").value=data.secondaryDamage;
+
 renderInventory();
-save();
+renderAvatar();
 }
-document.getElementById("character").addEventListener("input",e=>{data.character=e.target.value;save();});
+
+document.getElementById("character").addEventListener("input",e=>{
+data.character=e.target.value;
+save();
+});
+
 document.getElementById("hpmax").addEventListener("input",e=>{
 data.hpmax=Math.max(1,Number(e.target.value)||1);
-data.hp=Math.min(data.hp,data.hpmax);render();
+data.hp=Math.min(data.hp,data.hpmax);
+render();
+save();
 });
-document.getElementById("mainDamage").addEventListener("input",e=>{data.mainDamage=e.target.value;save();});
-document.getElementById("mainWeapon").addEventListener("input",e=>{data.mainWeapon=e.target.value;save();});
-document.getElementById("secondary").addEventListener("change",e=>{data.secondary=e.target.value;save();});
-document.getElementById("secondaryDamage").addEventListener("input",e=>{data.secondaryDamage=e.target.value;save();});
+
+document.getElementById("mainWeapon").addEventListener("input",e=>{
+data.mainWeapon=e.target.value;
+save();
+});
+
+document.getElementById("mainDamage").addEventListener("input",e=>{
+data.mainDamage=e.target.value;
+save();
+});
+
+document.getElementById("secondary").addEventListener("change",e=>{
+data.secondary=e.target.value;
+save();
+});
+
+document.getElementById("secondaryDamage").addEventListener("input",e=>{
+data.secondaryDamage=e.target.value;
+save();
+});
+
+document.getElementById("avatarInput").addEventListener("change",e=>{
+const file=e.target.files[0];
+
+if(!file)return;
+
+if(file.type!=="image/jpeg"){
+alert("Choisis une photo au format JPEG.");
+e.target.value="";
+return;
+}
+
+const reader=new FileReader();
+
+reader.onload=event=>{
+const image=new Image();
+
+image.onload=()=>{
+const canvas=document.createElement("canvas");
+const maxSize=512;
+
+const ratio=Math.min(
+1,
+maxSize/Math.max(image.width,image.height)
+);
+
+canvas.width=Math.round(image.width*ratio);
+canvas.height=Math.round(image.height*ratio);
+
+const ctx=canvas.getContext("2d");
+ctx.drawImage(image,0,0,canvas.width,canvas.height);
+
+data.avatar=canvas.toDataURL("image/jpeg",0.75);
+
+if(save()){
+renderAvatar();
+}else{
+data.avatar="";
+renderAvatar();
+alert("La photo est trop volumineuse pour être sauvegardée.");
+}
+};
+
+image.onerror=()=>{
+alert("Impossible de lire cette photo.");
+};
+
+image.src=event.target.result;
+};
+
+reader.onerror=()=>{
+alert("Erreur pendant le chargement de la photo.");
+};
+
+reader.readAsDataURL(file);
+});
+
 render();
 </script>
-  <script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js");
-  });
+
+<script>
+if("serviceWorker" in navigator){
+window.addEventListener("load",()=>{
+navigator.serviceWorker.register("./service-worker.js");
+});
 }
 </script>
+
 </body>
 </html>
