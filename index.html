@@ -261,6 +261,7 @@ data.hpmax=Math.max(1,Number(e.target.value)||1);
 data.hp=Math.min(data.hp,data.hpmax);render();
 });
 document.getElementById("mainDamage").addEventListener("input",e=>{data.mainDamage=e.target.value;save();});
+document.getElementById("mainWeapon").addEventListener("input",e=>{data.mainWeapon=e.target.value;save();});
 document.getElementById("secondary").addEventListener("change",e=>{data.secondary=e.target.value;save();});
 document.getElementById("secondaryDamage").addEventListener("input",e=>{data.secondaryDamage=e.target.value;save();});
 render();
