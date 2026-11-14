@@ -1,4 +1,4 @@
-const CACHE_NAME = "grimoire-rpg-v3";
+const CACHE_NAME = "grimoire-rpg-v4";
 
 const FILES_TO_CACHE = [
   "./",
